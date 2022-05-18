@@ -6,7 +6,9 @@ focus on triaging and merging pull requests.
 ## Roles
 
 CPython uses labels for many purposes. Only triagers and core developers
-can apply labels. Some may be added or removed by bots.
+can apply labels. Some may be added or removed by bots, and some are
+not supposed to be used by triagers (e.g., "automerge", which triggers
+an automatic merge once CI coompletes).
 
 Triagers can also do the following:
 
