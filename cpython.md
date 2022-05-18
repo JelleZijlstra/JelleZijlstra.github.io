@@ -3,6 +3,26 @@
 These are some personal notes on how to work with the CPython project. They
 focus on triaging and merging pull requests.
 
+## Roles
+
+CPython uses labels for many purposes. Only triagers and core developers
+can apply labels. Some may be added or removed by bots.
+
+Triagers can also do the following:
+
+- Close or reopen issues
+- Close or reopen pull requests (sometimes useful to retrigger CI)
+
+Core developers can:
+
+- Merge pull requests into main and the bugfix branches
+- Click the button to approve CI for new contributors
+- Edit existing PR branches. This is useful when giving small
+  feedback (e.g., through the suggestions UI for reviews): it may be
+  quicker and easier to apply the change yourself than wait for the PR author.
+- Click the "Update branch" button to update a branch with main
+  (useful for old PRs where the new CLA check hasn't run yet)
+
 ## Buildbots
 
 Every PR runs CPython's regular CI, which includes running the full
@@ -63,15 +83,19 @@ what is a bug and what is a feature?
 Here are some rules I've come up with:
 
 - Security issues do get backported, even to the security-only branches.
+  (The status of each branch is listed in [the devguide](https://devguide.python.org/#status-of-python-branches).)
   This includes issues that can cause the interpreter itself to crash,
-  because those can trigger DoS vulnerabilities and segfault bugs often
-  allow arbitrary code execution. Only the release manager is allowed
-  to merge changes into the security branches.
+  because those can trigger DoS vulnerabilities, and segfault bugs often
+  allow arbitrary code execution. Only the release manager for the branch
+  is allowed to merge changes into the security branches.
 - Documentation improvements virtually always get backported (unless
   they apply only to a newer version). We want users on all versions
-  to see improved documentation as soon as possible.
-- New or improved tests should usually be backported. This makes us
+  to see improved documentation as soon as possible, and there is very
+  little risk that such changes will cause problems for any user.
+- New or improved tests should usually be backported (provided, of course,
+  that they apply to features that exist in the backport branch). This makes us
   more confident when we make additional changes to the tested code later.
+  However, some core devs may not agree.
 - Performance improvements do not get backported. There is always a
   risk they break something, and users who want improvements should
   upgrade to a newer version.
@@ -85,7 +109,7 @@ Here are some rules I've come up with:
 
 ## "skip issue" and "skip news"
 
-Most changes to CPython require an issue to be created, and most
+Significant changes to CPython require an issue to be created, and most
 also require a news entry. You can use the `blurb` command-line
 tool or the `blurb-it` website to create a news entry.
 
@@ -150,6 +174,8 @@ should be closed. Example scenarios:
   is not responding.
 - The problem that the PR fixes was already addressed. Sometimes there
   are multiple PRs doing the same thing, and we only need to merge one.
+- The PR makes a purely cosmetic change that doesn't clearly improve
+  the code.
 
 It's not a good experience for users when their PR gets closed,
 so I try to be diplomatic.
