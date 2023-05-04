@@ -14,16 +14,16 @@ Triagers can also do the following:
 
 - Close or reopen issues
 - Close or reopen pull requests (sometimes useful to retrigger CI)
-
-Core developers can:
-
-- Merge pull requests into main and the bugfix branches
 - Click the button to approve CI for new contributors
 - Edit existing PR branches. This is useful when giving small
   feedback (e.g., through the suggestions UI for reviews): it may be
   quicker and easier to apply the change yourself than wait for the PR author.
 - Click the "Update branch" button to update a branch with main
   (useful for old PRs where the new CLA check hasn't run yet)
+
+Core developers can:
+
+- Merge pull requests into main and the bugfix branches
 
 ## Buildbots
 
