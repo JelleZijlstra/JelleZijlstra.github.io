@@ -69,7 +69,7 @@ successfully.
 
 The bot will automatically merge backport PRs that have been approved
 by a core dev after CI passes. I will usually look over the PR
-to make sure it makes sense, approve it, and assign it to myself.
+to make sure it makes sense, enable automerge, and assign it to myself.
 I check the list of PRs assigned to me regularly, so if CI doesn't
 pass or something, I'll come back to the PR later to get it merged.
 If you manually created the backport PR with `cherry_picker`, it
