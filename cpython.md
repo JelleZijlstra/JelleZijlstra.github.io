@@ -38,7 +38,9 @@ most important unique aspects:
 
 - A few buildbots check for reference leaks. Getting reference counts
   wrong is an extremely common bug in CPython's C code, so this is
-  where buildbots most frequently help find issues.
+  where buildbots most frequently help find issues. There is a specific
+  label, "test with refleak buildbots", that can be used to trigger
+  only these buildbots.
 - They run on some unusual operating systems, so they exercise
   code paths that don't run on the usual CI (e.g., there are some
   big-endian systems).
