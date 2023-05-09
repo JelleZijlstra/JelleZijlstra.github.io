@@ -69,13 +69,15 @@ Occasionally the bot posts a message saying something like
 the label for that branch and reapply it, and the bot will try again, usually
 successfully.
 
-The bot will automatically merge backport PRs that have been approved
-by a core dev after CI passes. I will usually look over the PR
+GitHub automerge is especially useful for backport PRs:
+if automerge is enabled on a PR, the PR will be automatically merged
+after all "required" CI checks have passed.
+(It isn't required for the PR to have been approved for automerge to succeed.)
+I will usually look over the PR
 to make sure it makes sense, enable automerge, and assign it to myself.
 I check the list of PRs assigned to me regularly, so if CI doesn't
 pass or something, I'll come back to the PR later to get it merged.
-If you manually created the backport PR with `cherry_picker`, it
-won't be automerged. My workflow is to check back a few hours later
+My workflow is to check back a few hours later
 and merge if CI has passed by then.
 
 ### What to backport?
