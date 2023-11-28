@@ -4,7 +4,8 @@ I recently proposed [PEP 729](https://peps.python.org/pep-0729/), which
 created a Typing Council to govern the Python type system, and now that
 the PEP has been accepted, I am one of the inaugural members of the
 Council. I am writing this document to gather some of my own thoughts
-on how I'll make decisions while I'm on the Council.
+on how I'll make decisions while I'm on the Council. My aim here is to set
+expectations for people who want to submit issues to the Council.
 
 Note that these are my personal thoughts, and other members of the Council
 may not agree.
