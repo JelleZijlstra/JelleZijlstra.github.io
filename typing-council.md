@@ -45,7 +45,7 @@ The Council's mandate contains three parts, and one of them is that the
 type system should be stable. That's important because typing is now
 an important tool for many real-world Python users, and we want their
 code to continue working. For example, if library authors release a
-library that exposes types using semantics specified in the PEPS or
+library that exposes types using semantics specified in the PEPs or
 now in the typing spec, they should reasonably expect that type checkers
 in the future will interpret those semantics the same as they do now.
 
