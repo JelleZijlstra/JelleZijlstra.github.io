@@ -6,3 +6,4 @@ This site hosts a few articles about my open-source software work:
   norms on the CPython open-source project
 - [PEP 695](./pep695), a deep dive into the implementation of PEP 695 - Type Parameter
   Syntax
+- [Typing Council](./typing-council), some thoughts on my role on the Typing Council.
