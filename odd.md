@@ -16,7 +16,7 @@ On normal classes, `__annotations__` holds exactly what the user wrote:
 {'a': None, 'b': 'str'}
 ```
 
-But when NamedTuple and TypedDict are used, some types are transformed into other ones:
+But when NamedTuple and TypedDict are used, some types are converted during the creation of the class:
 
 ```pycon
 >>> class X(NamedTuple):
@@ -115,7 +115,7 @@ This is not true for normal classes:
 
 Or for `NamedTuple`:
 
-```
+```pycon
 >>> class X(NamedTuple):
 ...     a: int
 ... 
