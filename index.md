@@ -9,3 +9,5 @@ This site hosts a few articles about my open-source software work:
 - [Typing Council](./typing-council), some thoughts on my role on the Typing Council.
 - [Improving the `ast` module in Python 3.13](./ast313), notes on how the `ast` module
   is changing in Python 3.13.
+- [Odd annotations](./odd), some odd or unexpected behaviors around annotations in
+  Python
