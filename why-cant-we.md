@@ -154,6 +154,12 @@ Fixing this, so that `X[a, b]` and `X[(a, b)]` behave differently at
 runtime, is difficult because it would be a backwards-incompatible
 change to the language.
 
+_`|` operator_: Tuple objects currently do not support the `|` operator,
+used for building unions. We could add it and make it return a `Union`,
+but it might be unintuitive for users to give this operator a typng-specific
+meaning, since `|` works on other builtin collections (set, dict) with
+very different behavior.
+
 _Generics_: Generic tuple types raise similar issues as discussed
 for generic inline TypedDicts (above).
 
@@ -175,7 +181,7 @@ a TypedDict with a single item.)
 
 _`|` operator_: This operator represents a union in the type system.
 However, sets and dicts already define this operator with conflicting
-semantics. Lists don't and we could in theory make `[int] | [str]` return
+semantics. Lists don't, and we could in theory make `[int] | [str]` return
 `Union[[int], [str]]`, but adding that operation to such a basic type would
 be confusing for users.
 
@@ -216,10 +222,14 @@ a few builtin functions for this would be confusing for users.
 
 _Implementation complexity_: For this idea to work, the `iter` and `callable`
 builtins would have to be made subscriptable. There is an open proposal
-to make all functions subscriptable ([PEP 718](https://peps.python.org/pep-0718/)),
-but failing that, we might have to add a new kind of builtin function just
-for these two. Not out of the question, but it makes the language core more
-complicated.
+to make all functions subscriptable ([PEP 718](https://peps.python.org/pep-0718/)).
+If that is accepted, subscripting would work, though there might be room for
+confusion because its meaning is different for these functions and for
+functions in general. Without PEP 718, we might have to add a new kind of builtin function just
+for `iter` and `callable`, so we can add subscription support. Not out of the question,
+but it makes the language core more complicated.
+
+Similarly, these functions would have to support the `|` operator.
 
 _Iterable or iterator_: It's not clear whether `iter` would mean `Iterable`
 or `Iterator`. `Iterable` is more commonly useful in types, but the `iter()`
@@ -229,6 +239,42 @@ Since both interpretations are plausible, users will be confused.
 _Potential conflicting interpretation_: There have also been suggestions
 to make a function object valid in a type expression, representing the
 callable type of the function. These two ideas would conflict.
+
+## Bare literals
+
+### Idea
+
+Instead of writing `Literal[]`, why not allow writing literal objects
+directly as themselves, such as using `1 | 2` instead of `Literal[1, 2]`.
+
+Note that the typing spec allows the following types inside `Literal[]`:
+
+- `str`
+- `bytes`
+- `int`
+- Enums
+- `bool`
+- `None`
+
+### Problems
+
+_`|` operator_: Ints, bools, and some enums already support the `|` operator
+in a conflicting meaning: `1 | 2` evaluates at runtime to `3`. This would
+make it impossible to introspect such literal types at runtime.
+
+`str` and `bytes` do not currently support `|` and it could be added with a
+typing-specific meaning, but as discussed in other ideas above, this would
+likely be confusing for users.
+
+This problem is especially acute for this idea because literals very frequently
+show up in unions, and because the runtime optimizes away the `|` operator when
+used on literals, so even an approach that looks at bytecode cannot recover the
+original literals.
+
+_Confusion with stringified annotations_: Strings already have a meaning in annotations:
+they represent stringified annotations, which type checkers are supposed to
+(conceptually) call `eval()` on. Making bare strings mean `Literal` types
+would conflict with this existing meaning.
 
 ## Contributing
 
