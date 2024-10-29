@@ -105,7 +105,7 @@ TypeError: unsupported operand type(s) for |: 'dict' and 'type'
 ```
 
 However, this is fixable by changing the implementation of `__or__`
-on type objects.
+and `__ror__` on type objects.
 
 _Inheritance_: How would the inline syntax support inheriting from another
 TypedDict? The most obvious syntax that comes to mind is
@@ -224,7 +224,7 @@ _Implementation complexity_: For this idea to work, the `iter` and `callable`
 builtins would have to be made subscriptable. There is an open proposal
 to make all functions subscriptable ([PEP 718](https://peps.python.org/pep-0718/)).
 If that is accepted, subscripting would work, though there might be room for
-confusion because its meaning is different for these functions and for
+confusion because its meaning would be different for these functions than for
 functions in general. Without PEP 718, we might have to add a new kind of builtin function just
 for `iter` and `callable`, so we can add subscription support. Not out of the question,
 but it makes the language core more complicated.
