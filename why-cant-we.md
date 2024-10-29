@@ -2,11 +2,11 @@
 
 A common complaint about the Python type system is that it is too verbose
 and requires too many imports. There are many concrete ideas that come up
-from time to time for making the syntax more concise, but many of them
-have practical problems. This document is intended to list those ideas with
+from time to time for making the syntax more concise, but these tend to run
+into practical problems. This document is intended to list those ideas with
 the problems associated with them.
 
-The problems listed here aren't necessarily the end of the listed ideas.
+The problems listed here aren't necessarily fatal to each idea.
 Some of them may be minor enough that the increase in concision is worth
 it. Others could be worked around with a tweak to the idea. If you feel
 that any of these ideas is worthwhile and you have the time and energy
@@ -74,6 +74,10 @@ like the existing call-based syntax for creating a TypedDict.
 The `NotRequired` and `ReadOnly` type qualifiers could also be used,
 e.g. `{"name": str, "year": NotRequired[int]}`.
 
+Note that some of the below problems can be mitigated by wrapping
+the dictionary, e.g. `TypedDict[{"name": str}]`. The in-preparation
+PEP 764 will propose this syntax.
+
 ### Problems
 
 _`|` operator_: The `|` operator is already defined for dictionaries,
@@ -122,7 +126,7 @@ syntax, like `MyDict: TypeAlias = {"a": T}`, it is impossible to specialize
 the generic at runtime; `MyDict[int]` would throw KeyError. However, the native
 syntax for type aliases in Python 3.12 fixes this; you could write
 `type MyDict[T] = {"a": T}` and `MyDict[int]` would work as expected, because
-it gets handled by the type alias object, not the dict. Still, this could be
+subscripting gets handled by the type alias object, not the dict. Still, this could be
 a problem for users who want to use the inline syntax and maintain compatibility
 with Python 3.11 and earlier.
 
@@ -145,6 +149,10 @@ parsers could distinguish these two cases, that is not possible for
 type checkers that rely on the Python AST (such as mypy and pyanalyze),
 and anything that introspects types at runtime also would not be able
 to tell the difference.
+
+Fixing this, so that `X[a, b]` and `X[(a, b)]` behave differently at
+runtime, is difficult because it would be a backwards-incompatible
+change to the language.
 
 _Generics_: Generic tuple types raise similar issues as discussed
 for generic inline TypedDicts (above).
@@ -177,9 +185,9 @@ deduplicating and caching typing-related objects. There are fallbacks for
 non-hashable types, but they are much slower.
 
 _Hashability, again_: The proposed syntax for set and dict literals requires
-the inner type to be hashable (only the key type for dicts). While this is true
-for most objects that result from evaluating type expressions, it is not
-necessarily true. For example, `Annotated` metadata may not be hashable.
+the inner type to be hashable (only the key type for dicts). While most type
+forms are hashable, this is not universally true. For example, `Annotated`
+metadata may not be hashable.
 
 _Bad incentives_: This is a more subjective one. Style guidance often
 suggests using abstract, covariant types, such as `Sequence` or `Mapping`,
