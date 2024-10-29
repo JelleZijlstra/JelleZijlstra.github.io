@@ -11,6 +11,8 @@ This site hosts a few articles about my open-source software work:
   is changing in Python 3.13.
 - [Odd annotations](./odd), some odd or unexpected behaviors around annotations in
   Python
+- [Why can't we ...?](./why-cant-we), problems with some commonly suggested usability
+  improvements for Python typing
 
 ## Talks
 
