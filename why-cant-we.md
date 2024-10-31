@@ -276,6 +276,100 @@ they represent stringified annotations, which type checkers are supposed to
 (conceptually) call `eval()` on. Making bare strings mean `Literal` types
 would conflict with this existing meaning.
 
+## Syntax for callable types
+
+We have to use an awkward syntax with `Callable` to write out callable types;
+why can't we use native syntax like `(int) -> bool`?
+
+### PEP 677
+
+This was proposed in [PEP 677](https://peps.python.org/pep-0677/), and it is
+instructive to review the [rejection message](https://mail.python.org/archives/list/python-dev@python.org/message/NHCLHCU2XCWTBGF732WESMN42YYVKOXB/):
+
+> 1. We feel we need to be cautious when introducing new syntax. Our new
+> parser presents understandably exciting opportunities but we don’t want its
+> existence to mean we add new syntax easily. A feature for use only in a
+> fraction of type annotations, not something every Python user uses, did not
+> feel like a strong enough reason to justify the complexity needed to parse
+> this new syntax and provide meaningful error messages. Not only code
+> complexity, humans are also parsers that must look forwards and backwards.
+
+Adding syntax is (and should be!) hard because it doesn't affect just the
+rules type checkers use to parse types, but the complexity of the entire
+language. A useful contrast is with [PEP 695](https://peps.python.org/pep-0695/),
+which also introduced typing-specific syntax—rather a lot of it, in fact—but
+was [accepted](https://discuss.python.org/t/pep-695-type-parameter-syntax/21646/92).
+The difference appears to have been that PEP 677 proposed pure syntactic sugar,
+while PEP 695 made improvements to concepts that were difficult to
+even express in the old syntax: type variable scoping and explicit variance.
+
+> 2. While the current Callable[x, y] syntax is not loved, it does work. This
+> PEP isn’t enabling authors to express anything they cannot already. The PEP
+> explicitly chose be conservative and not allow more syntax to express
+> features going beyond what Callable supports. We applaud that decision,
+> starting simple is good. But we can imagine a future where the syntax would
+> desire to be expanded upon.
+
+This was an important issue to consider while preparing the PEP: should it
+aim to cover only things that are already possible with `Callable`, or should
+it expand to cover kinds of callables that `Callable` cannot currently support?
+
+For example, the PEP could have proposed syntax like `(int, str = "") -> bool`
+to support signatures with defaults, or `(int, *, name: str = "") -> bool`
+to support named, keyword-only parameters. Such signatures can currently only
+be expressed with callable protocols, which are very verbose. Expanding the
+PEP with such syntax would have made it more powerful, but would also have
+increased the complexity of the grammar changes.
+
+In the years since the PEP was rejected, we ended up
+[expanding the spec](https://typing.readthedocs.io/en/latest/spec/callables.html#meaning-of-in-callable)
+to support a syntax that PEP 677 would have disallowed: `Callable[Concatenate[int, ...], str]`,
+denoting a callable that takes a single `int`, followed by arbitrary other arguments.
+PEP 677 [only allowed](https://peps.python.org/pep-0677/#disallowing-as-an-argument-type)
+`...` as the sole element of the call signature.
+
+> 3. In line with past SC guidance, we acknowledge challenges when syntax
+> desires do not align between typing and Python itself. Each time we add
+> syntax solely for typing it shifts us further in the direction of typing
+> being its own mini-language so we aim to tread lightly in what gets added
+> here. Adopting PEP 677 would lock us into its syntax forever, potentially
+> preventing other future syntax directions.
+
+Syntactic changes are hard in part because they are effectively permanent.
+If we want to add syntax for the benefit of typing, it needs to be not just
+solidly motivated but also well integrated into the rest of the language.
+
+> 4. We did not like the visual and cognitive consequence of multiple `->`
+> tokens in a def. Especially when code is not formatted nicely. Though we
+> admit the correlation between Python typing and formatter users is high.
+
+Quoting a few examples from the PEP:
+
+```python
+def f() -> (int) -> (str) -> bool: pass
+def f() -> (int, str) -> bool: pass
+(int) -> (() -> int) | (() -> bool)
+```
+
+The PEP includes these as examples for illustrating how precedence works,
+but they certainly do look awkward.
+
+These are the equivalent types expressed with `Callable`:
+
+```python
+def f() -> Callable[[int], Callable[[str], bool]]: pass
+def f() -> Callable[[int, str], bool]: pass
+Callable[[int], Callable[[], int] | Callable[[], bool]]
+```
+
+### Looking forward
+
+Any future proposal to improve the syntax for callable types should look
+carefully at PEP 677 and why it was rejected. It should explain why the
+new syntax makes typing easier to use, and also propose a syntax that
+integrates well into the rest of the language. What such a proposal would
+look like I cannot say.
+
 ## Contributing
 
 If you know of another idea that belongs on this list, or another technical
