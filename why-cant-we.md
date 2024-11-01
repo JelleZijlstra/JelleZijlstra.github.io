@@ -390,7 +390,8 @@ in a number of contexts.
 
 If you know of another idea that belongs on this list, or another technical
 problem that should be discussed, feel free to open an issue or PR on
-https://github.com/JelleZijlstra/JelleZijlstra.github.io about it.
+[JelleZijlstra.github.io](https://github.com/JelleZijlstra/JelleZijlstra.github.io)
+about it.
 
 Remember though that this document is meant purely as a list of technical
 concerns, not as a discussion forum.
