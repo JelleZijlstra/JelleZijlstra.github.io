@@ -370,6 +370,22 @@ new syntax makes typing easier to use, and also propose a syntax that
 integrates well into the rest of the language. What such a proposal would
 look like I cannot say.
 
+## Themes
+
+A common theme in this document is that adding the feature would
+make it more difficult to introspect type annotations at runtime. Those
+problems generally do not matter for purely static type checkers, which
+either look only at the AST or have their own dedicated parser. However,
+the fact that types in Python are introspectable at runtime is a unique
+and powerful feature. Popular libraries such as dataclasses, Pydantic,
+and FastAPI rely on accessing annotations at runtime.
+
+Still, there may be ways to get the best of both worlds and allow more
+flexible syntax in annotations, while still allowing runtime introspection.
+The new tools provided by PEP 649 and 749 in Python 3.14 should help here.
+It's worth noting, though, that types can still appear outside of annotations
+in a number of contexts.
+
 ## Contributing
 
 If you know of another idea that belongs on this list, or another technical
