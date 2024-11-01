@@ -145,7 +145,7 @@ _Presence in subscripts_: In the Python AST, `X[a, b]` and `X[(a, b)]`
 are represented identically. This is a problem, because with the
 proposed syntax for tuple types, these two pieces of code could
 represent different types: `X[a, b]` has two type arguments `a` and `b`,
-while `(a, b)` has a single type argument `tuple[a, b]`.
+while `X[(a, b)]` has a single type argument `tuple[a, b]`.
 While type checkers that use their own
 parsers could distinguish these two cases, that is not possible for
 type checkers that rely on the Python AST (such as mypy and pyanalyze),
