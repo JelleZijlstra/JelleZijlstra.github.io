@@ -158,7 +158,7 @@ change to the language.
 
 _`|` operator_: Tuple objects currently do not support the `|` operator,
 used for building unions. We could add it and make it return a `Union`,
-but it might be unintuitive for users to give this operator a typng-specific
+but it might be unintuitive for users to give this operator a typing-specific
 meaning, since `|` works on other builtin collections (set, dict) with
 very different behavior.
 
