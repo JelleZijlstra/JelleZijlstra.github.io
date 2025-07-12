@@ -9,7 +9,7 @@ directly on these core concepts and to use more set theory-based concepts in its
 type system.
 
 These two developments have prompted me to take a closer look at possible extensions of the type system
-that align with the set-theoretic framework we now use. In particular, this article covers *negation 
+that align with the set-theoretic framework we now use. In particular, this article covers *negation
 types*: types that contain all values that are not part of some other type.
 I'll first review the theoretical framework, then discuss how negation types could fit into Python's
 gradual type system, and close by discussing the practical value of negation types.
@@ -20,17 +20,19 @@ For the following discussion of negation types to make sense, we first have to r
 of the type system, as outlined in more detail in
 ["Type system concepts"](https://typing.python.org/en/latest/spec/concepts.html).
 
-Python's type system is conceptually based on set-theoretic types: a type is understood as a set of 
-possible values. For example, the type `int` includes all values that are instance of the class `int` or a 
-subclass at runtime, and the type `Literal[43]` includes only the instance of `int` with the value 
+Python's type system is conceptually based on set-theoretic types: a type is understood as a set of
+possible values. For example, the type `int` includes all values that are instance of the class `int` or a
+subclass at runtime, and the type `Literal[43]` includes only instances of exactly `int` (not a
+subclass) with the value
 `43`. Subtyping is defined through the subset relation: because all members of `Literal[43]` are also
 members of `int`, `Literal[43]` is a subtype of `int` and a value of type `Literal[43]` can be used
 when an `int` is expected.
 
-But what we just said only applies to what we call *fully static types*, which represent a known
-set of possible values. In addition, we have *dynamic types*, which include a *gradual form* such as `Any`.
-(We might want to use the term "gradual type" for dynamic types, but the spec has chosen to define
-"gradual type" to include all types, both static and dynamic.) A dynamic type does not refer to
+But what we just said only applies to what we call *fully static types*, which represent known
+sets of possible values. In addition, we have *dynamic types*, which include a *gradual form* such as `Any`.
+(This term does not appear in the spec, but it is useful to be able to talk about dynamic types, and
+the term seems natural.) We use the term *gradual types* for all types, dynamic or fully static.
+A dynamic type does not refer to
 a single set of possible values, but can refer to any type within a range. We call these types *materializations*,
 and in general, operations on gradual types are acceptable if there is any materialization of the gradual
 type that could make the operation work. The most prominent gradual type is `Any`, which can materialize to any type.
@@ -38,7 +40,7 @@ type that could make the operation work. The most prominent gradual type is `Any
 For example, type checkers emit an error if they see an attempt to add an `int` to a `str` (`int + str`).
 But `int + Any` is allowed: the `Any` could materialize to a type that would make the `+` operation work,
 such as `int` or `float`. Some errors may still be detected even if `Any` is used, though. Consider the
-operation `int + (str | Any)`, adding an `int` to something that may be either a `str` or `Any`. Now, no 
+operation `int + (str | Any)`, adding an `int` to something that may be either a `str` or `Any`. Now, no
 matter what we materialize the `Any` to (e.g., `int + str | int`, `int + str | str`, `int + str | None`),
 type checkers will reject the operation, because we might be adding an `int` and a `str`.
 
@@ -51,7 +53,7 @@ In this article, we focus on a third operatoin: negation.
 ## Negation types in a gradual type system
 
 We'll use `~T` to denote the negation type of `T`: a type that contains all values that are not part of
-`T` (assuming `T` is fully static). For example, the type `~bool` contains all values that are not 
+`T` (assuming `T` is fully static). For example, the type `~bool` contains all values that are not
 instances of `bool`. In practice we usually encounter negation types in intersections. For example,
 the type `int & ~bool` contains all values of type `int` that are not instances of `bool`.
 
@@ -59,7 +61,7 @@ Above I was careful to specify only fully static types. The behavior of negated 
 bit less intuitive. For example, `~Any` is in fact the same type as `Any` (in the spec's terminology,
 these are equivalent types). That's because `Any` can materialize to any fully static type, and therefore also to the negation of any other fully static type. Thus, for any materialization of `~Any`,
 there is an equivalent materialization of `Any`, and vice versa. For example,
-if we have the `Any` in `~Any` materialize to `int`, the type is `~int`, and the other `Any` can 
+if we have the `Any` in `~Any` materialize to `int`, the type is `~int`, and the other `Any` can
 materialize directly to `~int`. If instead we have the first `Any` materialize to `~int`, the type
 simplifies to `~~int = int`, and the other `Any` can materialize to `int`.
 
@@ -76,17 +78,17 @@ We can similarly create a *bottom materialization* `Bottom[T]` that is a subtype
 of `T`, or the intersection of all materializations of `T`. (We'll need this type later.) These concepts
 appear in the gradual typing literature, but they have some issues when applied to the Python type system.
 
-First, we call it the "top materialization", but by a literal reading of the spec, this type is not a 
+First, we call it the "top materialization", but by a literal reading of the spec, this type is not a
 materialization of `list[Any]` at all: the spec
-[says](https://typing.python.org/en/latest/spec/concepts.html#materialization) that we create 
-materializations by "replacing" occurrences of `Any` with another type, and we can create a union type
-like `list[str] | list[int]` by replacing `Any` in `list[Any]` with a different type, let alone the infinite union that 
-is `Top[list[Any]]`. This is a [known defect](https://github.com/python/typing/issues/2027) in the 
+[says](https://typing.python.org/en/latest/spec/concepts.html#materialization) that we create
+materializations by "replacing" occurrences of `Any` with another type, but we cannot create a union type
+like `list[str] | list[int]` by replacing `Any` in `list[Any]` with a different type, let alone the infinite union that
+is `Top[list[Any]]`. This is a [known defect](https://github.com/python/typing/issues/2027) in the
 spec; I haven't proposed a fix yet since I need to think more about the right replacement wording,
-but a better definition of materialiation would allow for the union or intersection of two 
+but a better definition of materialiation would allow for the union or intersection of two
 materializations to also be a materialization.
 
-Second, and more seriously, the bottom materialization of many dynamic types will be equivalent to 
+Second, and more seriously, the bottom materialization of many dynamic types will be equivalent to
 `Never`. An object that is both a `list[int]` and a `list[str]`, for example, cannot exist.
 This in turn means that under the spec, all of these dynamic types are assignable to each other,
 since they have a shared materialization. This I believe is another defect in the spec, but we need
@@ -97,7 +99,7 @@ solution, but it allows some interesting reasoning. I hope to write more about t
 ### Simplifying negation types
 
 Now, with `Top[T]` available as a tool, we can formulate a rule: for a dynamic type `T`, `~T` is
-equivalent to `~Top[T] | T`. This is the union of all objects that are not part of any materialization 
+equivalent to `~Top[T] | T`. This is the union of all objects that are not part of any materialization
 of `T`, plus some unknown part of the dynamic type `T`.
 
 We can apply this rule to some example types:
@@ -106,8 +108,13 @@ We can apply this rule to some example types:
   `~object | Any = Never | Any = Any`.
 - `~tuple[Any] = ~Top[tuple[Any]] | tuple[Any] = ~tuple[object] | tuple[Any]`.
 
-Whether this counts as simplifying is debatable, since it usually makes for a more complex type,
-but it does mean that we can stop worrying about negating dynamic types.
+Whether this counts as simplifying is debatable, since it usually makes for a more complex type.
+Type checkers may have a harder time reasoning about this type; for example, `Sequence[object]`
+should be assignable to `~tuple[object] | tuple[Any]` (because the latter can materialize to
+`~tuple[object] | tuple[object] = object`), but assignability to unions is usually implemented by
+checking each arm of the union separately, which would yield an incorrect result in this case.
+However, this identity does mean that if we reason about negation types, we can reason about
+fully static negation types alone without loss of generality.
 
 There are a few other obvious rules that can help simplify negation types:
 
@@ -130,15 +137,15 @@ If `T` is a dynamic type, it is assignable to the fully static type `~U` if any 
 if `Bottom[T]` is not disjoint from `U`, then no other materialization can be disjoint from `U`,
 since all materializations are supertypes of `Bottom[T]`.
 
-If we also allow `U` to be a dynamic type, then the question becomes whether the intersection of
-`Bottom[T]` and `Bottom[U]` is inhabited.
+If `U` is a dynamic type, then `T` is assignable to `~U` if the intersection of
+`Bottom[T]` and `Bottom[U]` is uninhabited.
 
 ### Attributes on negation types
 
 Given a value `x: T & ~U`, how should a type checker infer the type of an expression like `x.attr`?
 In most cases, once the intersection has been fully simplified,
 the negative part of the intersection can simply be ignored. A type like
-`int & ~Literal[1]` has the same attributes as plain `int`; `object & ~str` does not differ from 
+`int & ~Literal[1]` has the same attributes as plain `int`; `object & ~str` does not differ from
 `object`.
 It is important, of course, that the intersection first gets simplified.
 `(int | str) & ~str` does not have the same attributes as `int`.
@@ -184,7 +191,7 @@ the `HasIntStr` and `HasStr` protocols don't overlap at all and the type of `obj
 to just `HasIntStr`.
 
 Are there any variations of the `HasIntStr` + `HasStr` intersection where we *can* narrow the
-attribute type? It seems to me that we can only narrow if every value that is a member of 
+attribute type? It seems to me that we can only narrow if every value that is a member of
 the `HasIntStr` equivalent type must have either an `int` or a `str` attribute, not both.
 
 That is the case, for example, with the following classes:
@@ -214,7 +221,7 @@ differ in their behavior in this area. However, the `NamedTuple` case at least s
 
 Attribute access on a fully simplified intersection with a negated type (`T & ~U`), then,
 should differ in behavior from
-attribute access on the positive part of the intersection (`T`) if something like the following 
+attribute access on the positive part of the intersection (`T`) if something like the following
 conditions hold:
 
 - `U` is a Protocol containing either only the attribute under consideration, or also some attributes
@@ -227,7 +234,7 @@ Additional slight complications arise if the `U` Protocol declares a mutable att
 relation between the types of the attribute in `T` and `U` are more complex.
 
 It's not quite attribute access, but similar reasoning applies to other operations on objects, such
-as subscripting of tuple and `TypedDict` types. Here too there are some conceivable cases where the 
+as subscripting of tuple and `TypedDict` types. Here too there are some conceivable cases where the
 negative parts of an intersection can have an influence:
 
 ```python
@@ -313,8 +320,8 @@ def f2(x: Sequence[str]):
 
 The existence of type narrowing means type checkers must have some understanding of negation types
 to be usable. However, these are implicit negation types; they are not written explicitly by a user.
-Also, because they arise only as the types of expressions, we mostly have to worry only about 
-assignability *from* these negation types, not about assignability *to* negation types. That's a 
+Also, because they arise only as the types of expressions, we mostly have to worry only about
+assignability *from* these negation types, not about assignability *to* negation types. That's a
 "mostly" because assignability from negation types does come up in cases involving contravariance.
 
 For example, consider this program:
@@ -437,7 +444,7 @@ m.get(object(), "default")  # int | Literal["default"]
 ```
 
 These use cases don't have as many issues with virality as the previous category, but they
-are more likely to require advanced aspects of negation types. 
+are more likely to require advanced aspects of negation types.
 
 ### Pragmatic negation types
 
@@ -463,7 +470,7 @@ simplifications, such as `(str | list[Any]) & ~list[Any] = str`, in the presence
 A correct implementation needs to implement a version of the subtyping relation for dynamic types.
 
 What do we lose when we throw away the negation type after simplification? We already saw that we lose
-some opportunities to narrow the types of attributes or subscripts, though only in a limited set of 
+some opportunities to narrow the types of attributes or subscripts, though only in a limited set of
 cases. For similar reasons, we may make incorrect assignability judgments in certain cases:
 
 ```python
@@ -505,3 +512,8 @@ Possible future topics include:
 - Materialization and the top and bottom materializations
 - Use cases for relations between types (such as assignability and subtyping)
 - "Black-box" and "white-box" attributes
+
+## Acknowledgments
+
+Carl Meyer and Alex Waygood helped shape my thinking on this subject and Alex also provided
+useful feedback on a draft.
