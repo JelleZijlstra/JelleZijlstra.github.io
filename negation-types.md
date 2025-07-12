@@ -21,24 +21,24 @@ of the type system, as outlined in more detail in
 ["Type system concepts"](https://typing.python.org/en/latest/spec/concepts.html).
 
 Python's type system is conceptually based on set-theoretic types: a type is understood as a set of 
-values. For example, the type `int` includes all values that are instance of the class `int` or a 
+possible values. For example, the type `int` includes all values that are instance of the class `int` or a 
 subclass at runtime, and the type `Literal[43]` includes only the instance of `int` with the value 
 `43`. Subtyping is defined through the subset relation: because all members of `Literal[43]` are also
 members of `int`, `Literal[43]` is a subtype of `int` and a value of type `Literal[43]` can be used
 when an `int` is expected.
 
 But what we just said only applies to what we call *fully static types*, which represent a known
-set of values. In addition, we have *dynamic types*, which include a *gradual form* such as `Any`.
+set of possible values. In addition, we have *dynamic types*, which include a *gradual form* such as `Any`.
 (We might want to use the term "gradual type" for dynamic types, but the spec has chosen to define
 "gradual type" to include all types, both static and dynamic.) A dynamic type does not refer to
-a single set of values, but can refer to any type within a range. We call these types *materializations*,
+a single set of possible values, but can refer to any type within a range. We call these types *materializations*,
 and in general, operations on gradual types are acceptable if there is any materialization of the gradual
 type that could make the operation work. The most prominent gradual type is `Any`, which can materialize to any type.
 
 For example, type checkers emit an error if they see an attempt to add an `int` to a `str` (`int + str`).
 But `int + Any` is allowed: the `Any` could materialize to a type that would make the `+` operation work,
 such as `int` or `float`. Some errors may still be detected even if `Any` is used, though. Consider the
-operation `int + str | Any`, adding an `int` to something that may be either a `str` or `Any`. Now, no 
+operation `int + (str | Any)`, adding an `int` to something that may be either a `str` or `Any`. Now, no 
 matter what we materialize the `Any` to (e.g., `int + str | int`, `int + str | str`, `int + str | None`),
 type checkers will reject the operation, because we might be adding an `int` and a `str`.
 
@@ -74,13 +74,13 @@ therefore all instances of `list` regardless of their generic argument.
 
 We can similarly create a *bottom materialization* `Bottom[T]` that is a subtype of every materialization
 of `T`, or the intersection of all materializations of `T`. (We'll need this type later.) These concepts
-appear in the gradual typing literature, but they have some issues when used in the Python type system.
+appear in the gradual typing literature, but they have some issues when applied to the Python type system.
 
 First, we call it the "top materialization", but by a literal reading of the spec, this type is not a 
 materialization of `list[Any]` at all: the spec
 [says](https://typing.python.org/en/latest/spec/concepts.html#materialization) that we create 
 materializations by "replacing" occurrences of `Any` with another type, and we can create a union type
-like `list[str] | list[int]` by replacing `Any` with a different type, let alone the infinite union that 
+like `list[str] | list[int]` by replacing `Any` in `list[Any]` with a different type, let alone the infinite union that 
 is `Top[list[Any]]`. This is a [known defect](https://github.com/python/typing/issues/2027) in the 
 spec; I haven't proposed a fix yet since I need to think more about the right replacement wording,
 but a better definition of materialiation would allow for the union or intersection of two 
@@ -91,7 +91,7 @@ Second, and more seriously, the bottom materialization of many dynamic types wil
 This in turn means that under the spec, all of these dynamic types are assignable to each other,
 since they have a shared materialization. This I believe is another defect in the spec, but we need
 to think more about how to fix it. For our purposes in this article, we can simply stick our
-head in the sand and pretend that `Never` and `Bottom[T]` are different types. It's not a very satisfying
+heads in the sand and pretend that `Never` and `Bottom[T]` are different types. It's not a very satisfying
 solution, but it allows some interesting reasoning. I hope to write more about this topic later.
 
 ### Simplifying negation types
