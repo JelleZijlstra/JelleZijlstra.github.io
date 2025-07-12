@@ -189,6 +189,8 @@ subtypes of `HasStr`, yet might return either an `int` or a `str` when the attri
 accessed.
 
 ```python
+from typing import final
+
 @final
 class HasIntStrSneaky:
     @property
