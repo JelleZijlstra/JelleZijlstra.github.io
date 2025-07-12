@@ -79,7 +79,7 @@ to `~~int = int`, and the other `Any` can materialize to `int`.
 
 We can generalize this observation to transform away all negated dynamic types, but
 first we need to introduce a new concept: the _top materialization_, or `Top[T]`. For
-any type `T` (dynamic or static), `Top[T]` is a fully static type. For a fully static
+any type `T` (dynamic or fully static), `Top[T]` is a fully static type. For a fully static
 type, `Top[T]` is the same as `T`; for a dynamic type, it is the union of all
 materializations, and therefore every materialization is a subtype of `Top[T]`. For
 example, the type `Top[list[Any]]` includes all materializations of `list[Any]`, and
