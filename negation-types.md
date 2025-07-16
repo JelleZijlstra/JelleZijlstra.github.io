@@ -79,8 +79,8 @@ to `~~int = int`, and the other `Any` can materialize to `int`.
 
 We can generalize this observation to transform away all negated dynamic types, but
 first we need to introduce a new concept: the _top materialization_, or `Top[T]`. For
-any type `T` (dynamic or fully static), `Top[T]` is a fully static type. For a fully static
-type, `Top[T]` is the same as `T`; for a dynamic type, it is the union of all
+any type `T` (dynamic or fully static), `Top[T]` is a fully static type. For a fully
+static type, `Top[T]` is the same as `T`; for a dynamic type, it is the union of all
 materializations, and therefore every materialization is a subtype of `Top[T]`. For
 example, the type `Top[list[Any]]` includes all materializations of `list[Any]`, and
 therefore all instances of `list` regardless of their generic argument.
@@ -238,34 +238,33 @@ There might be room for debate over how many of the finality declarations we nee
 rule out subclasses that might override the attribute; type checkers differ in their
 behavior in this area. However, the `NamedTuple` case at least seems indisputable.
 
-We can formalize this rule as follows. Given a fully simplified intersection
-`T & ~P`, where `T` has an
-attribute `attr` of type `AT` and `P` has an attribute `attr` of type `AP`,
-accessing the attribute `attr` on `T & ~P` should yield type `AT`, unless these
+We can formalize this rule as follows. Given a fully simplified intersection `T & ~P`,
+where `T` has an attribute `attr` of type `AT` and `P` has an attribute `attr` of type
+`AP`, accessing the attribute `attr` on `T & ~P` should yield type `AT`, unless these
 conditions hold:
 
-- `P` is a Protocol containing either only `attr`, or also
-  some attributes that are present with the right type on all members of `T`. (In the
-  latter case, the intersection could be simplified to an equivalent one where the
-  Protocol contains only the relevant attribute.)
+- `P` is a Protocol containing either only `attr`, or also some attributes that are
+  present with the right type on all members of `T`. (In the latter case, the
+  intersection could be simplified to an equivalent one where the Protocol contains only
+  the relevant attribute.)
 - Every object that is a member of `T` is either a member of `P` (that is, it has an
   attribute of the specified type) or a member of a Protocol containing an attribute
   `attr` of type `~AT`. In other words, members of `T` can be divided into objects that
   have an attribute of type `AT` and ones that have an attribute of some other type;
   there cannot be any with an attribute that may return either type.
 
-For example, in the `HasIntStrNamedTuple` example, every instance of the class
-either has an `x` attribute of type `int` or an attribute of type `~int` (i.e., `str`, a subtype
-of `~int`). Therefore, given a value of type `HasIntStrNamedTuple & ~HasInt`, we can
-infer the type as `(int | str) & ~int = str`. But in the earlier case of `HasIntStrSneaky`,
-instances of the class are not divisible into two such buckets, so we cannot narrow
-the type of the attribute given a type `HasIntStrSneaky & ~HasInt`.
+For example, in the `HasIntStrNamedTuple` example, every instance of the class either
+has an `x` attribute of type `int` or an attribute of type `~int` (i.e., `str`, a
+subtype of `~int`). Therefore, given a value of type `HasIntStrNamedTuple & ~HasInt`, we
+can infer the type as `(int | str) & ~int = str`. But in the earlier case of
+`HasIntStrSneaky`, instances of the class are not divisible into two such buckets, so we
+cannot narrow the type of the attribute given a type `HasIntStrSneaky & ~HasInt`.
 
 Similar reasoning applies to more general cases such as mutable attributes and method
-calls. It also applies to other operations on
-objects, such as subscripting of tuple and `TypedDict` types, which can be thought of
-as syntactic sugar over attribute access. Here too there are some
-conceivable cases where the negative parts of an intersection can have an influence:
+calls. It also applies to other operations on objects, such as subscripting of tuple and
+`TypedDict` types, which can be thought of as syntactic sugar over attribute access.
+Here too there are some conceivable cases where the negative parts of an intersection
+can have an influence:
 
 ```python
 x1: tuple[int | str, ...] & ~tuple[str, *tuple[int | str, ...]]
@@ -502,9 +501,9 @@ must have some notion of negation types, but only implicit negation types and on
 somewhat limited context. There are also some use cases that would require explicit
 negation types, but those are extensions of the current type system. We also saw above
 that full support for gradual negation types requires significant amounts of machinery
-that the current type system does not require, especially when attribute access is involved.
-In addition, it becomes very important that type checkers can correctly
-check whether or not an intersection is inhabited.
+that the current type system does not require, especially when attribute access is
+involved. In addition, it becomes very important that type checkers can correctly check
+whether or not an intersection is inhabited.
 
 Is there a simpler variation of negation types that can work well in practice? We saw
 earlier that attribute access on intersections with negation types is usually equivalent
@@ -568,5 +567,5 @@ Python type system. Possible future topics include:
 
 ## Acknowledgments
 
-Carl Meyer and Alex Waygood helped shape my thinking on this subject and
-provided useful feedback on a draft.
+Carl Meyer and Alex Waygood helped shape my thinking on this subject and provided useful
+feedback on a draft.
