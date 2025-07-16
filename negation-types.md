@@ -39,7 +39,7 @@ _gradual types_ for all types, dynamic or fully static. A dynamic type does not 
 a single set of possible values, but can refer to any type within a range. We call these
 types _materializations_, and in general, operations on gradual types are acceptable if
 there is any materialization of the gradual type that could make the operation work. The
-most prominent gradual type is `Any`, which can materialize to any type.
+most prominent dynamic type is `Any`, which can materialize to any type.
 
 For example, type checkers emit an error if they see an attempt to add an `int` to a
 `str` (`int + str`). But `int + Any` is allowed: the `Any` could materialize to a type
@@ -55,7 +55,7 @@ If types are sets, we can use set operations on them. The union operation, writt
 operation, which is not currently an explicit part of the type system, is conventionally
 written as `&`; for example, `int & str` denotes the set of values that are members of
 both the `int` and `str` types (which happens to be the empty set). In this article, we
-focus on a third operatoin: negation.
+focus on a third operation: negation.
 
 ## Negation types in a gradual type system
 
@@ -136,12 +136,14 @@ There are a few other obvious rules that can help simplify negation types:
 - `~~T = T`
 - `~(T | U) = ~T & ~U`
 - `~(T & U) = ~T | ~U`
-- `(T | U) & ~V = (T & ~V) | (U & ~V)`
 - `T | ~T = object` (assuming fully static types)
 - `T & ~T = Never` (assuming fully static types)
 - `T & ~U = Never` if `T <: U` (assuming fully static types)
 - `T & ~U = Never` if `Top[T] <: Bottom[U]`
 - `T & ~U = T` if `T & U = Never`
+
+These rules can be combined with other rules for simplifying union and intersection
+types to reduce away many negation types.
 
 ### Assignability with negation types
 
@@ -236,23 +238,33 @@ There might be room for debate over how many of the finality declarations we nee
 rule out subclasses that might override the attribute; type checkers differ in their
 behavior in this area. However, the `NamedTuple` case at least seems indisputable.
 
-Attribute access on a fully simplified intersection with a negated type (`T & ~U`),
-then, should differ in behavior from attribute access on the positive part of the
-intersection (`T`) if something like the following conditions hold:
+We can formalize this rule as follows. Given a fully simplified intersection
+`T & ~P`, where `T` has an
+attribute `attr` of type `AT` and `P` has an attribute `attr` of type `AP`,
+accessing the attribute `attr` on `T & ~P` should yield type `AT`, unless these
+conditions hold:
 
-- `U` is a Protocol containing either only the attribute under consideration, or also
+- `P` is a Protocol containing either only `attr`, or also
   some attributes that are present with the right type on all members of `T`. (In the
   latter case, the intersection could be simplified to an equivalent one where the
   Protocol contains only the relevant attribute.)
-- Every member of `T` either has an attribute of the type declared by `U`, or an
-  attribute of some other type distinct from `U`; they cannot have an attribute that may
-  be of either type.
+- Every object that is a member of `T` is either a member of `P` (that is, it has an
+  attribute of the specified type) or a member of a Protocol containing an attribute
+  `attr` of type `~AT`. In other words, members of `T` can be divided into objects that
+  have an attribute of type `AT` and ones that have an attribute of some other type;
+  there cannot be any with an attribute that may return either type.
 
-Additional slight complications arise if the `U` Protocol declares a mutable attribute,
-or if the relation between the types of the attribute in `T` and `U` are more complex.
+For example, in the `HasIntStrNamedTuple` example, every instance of the class
+either has an `x` attribute of type `int` or an attribute of type `~int` (i.e., `str`, a subtype
+of `~int`). Therefore, given a value of type `HasIntStrNamedTuple & ~HasInt`, we can
+infer the type as `(int | str) & ~int = str`. But in the earlier case of `HasIntStrSneaky`,
+instances of the class are not divisible into two such buckets, so we cannot narrow
+the type of the attribute given a type `HasIntStrSneaky & ~HasInt`.
 
-It's not quite attribute access, but similar reasoning applies to other operations on
-objects, such as subscripting of tuple and `TypedDict` types. Here too there are some
+Similar reasoning applies to more general cases such as mutable attributes and method
+calls. It also applies to other operations on
+objects, such as subscripting of tuple and `TypedDict` types, which can be thought of
+as syntactic sugar over attribute access. Here too there are some
 conceivable cases where the negative parts of an intersection can have an influence:
 
 ```python
@@ -375,14 +387,19 @@ with the answer expected from our theoretical treatment of negation types:
 ```python
 from typing import TypeIs, Any, reveal_type
 
-def is_list(x: object) -> TypeIs[list[Any]]:
-    raise NotImplementedError
+def is_exactly_list(x: object) -> TypeIs[list[Any]]:
+    return type(x) is list
 
 def f1(x: list[Any] | str):
-    if is_list(x):
+    if is_exactly_list(x):
         reveal_type(x)  # list[Any]
     else:
         reveal_type(x)  # mypy and pyright: str (incorrect, should be str | list[Any])
+
+class Sublist[T](list[T]):
+    pass
+
+f1(Sublist())
 ```
 
 #### Basic types
@@ -485,8 +502,8 @@ must have some notion of negation types, but only implicit negation types and on
 somewhat limited context. There are also some use cases that would require explicit
 negation types, but those are extensions of the current type system. We also saw above
 that full support for gradual negation types requires significant amounts of machinery
-that the current type system does not require, such as the top and bottom
-materialization; in addition, it becomes very important that type checkers can correctly
+that the current type system does not require, especially when attribute access is involved.
+In addition, it becomes very important that type checkers can correctly
 check whether or not an intersection is inhabited.
 
 Is there a simpler variation of negation types that can work well in practice? We saw
@@ -551,5 +568,5 @@ Python type system. Possible future topics include:
 
 ## Acknowledgments
 
-Carl Meyer and Alex Waygood helped shape my thinking on this subject and Alex also
+Carl Meyer and Alex Waygood helped shape my thinking on this subject and
 provided useful feedback on a draft.
