@@ -13,6 +13,7 @@ This site hosts a few articles about my open-source software work:
   Python
 - [Why can't we ...?](./why-cant-we), problems with some commonly suggested usability
   improvements for Python typing
+- [Negation types](./negation-types), a discussion of negation types in Python
 
 ## Talks
 
