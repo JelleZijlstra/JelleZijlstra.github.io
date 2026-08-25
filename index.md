@@ -14,6 +14,8 @@ This site hosts a few articles about my open-source software work:
 - [Why can't we ...?](./why-cant-we), problems with some commonly suggested usability
   improvements for Python typing
 - [Negation types](./negation-types), a discussion of negation types in Python
+- [Trouble with materialization](./materialization-trouble), on problems in the theoretical
+  basis for the Python type system
 
 ## Talks
 
