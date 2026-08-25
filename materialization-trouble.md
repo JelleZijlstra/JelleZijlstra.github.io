@@ -14,6 +14,10 @@ In turn, a gradual type A is assignable to another type B if there is some mater
 of A that is a subtype of some materialization of B. It's an elegant concept once you understand it, but it turns
 out that it is not a full description of behaviors we want from Python's type system.
 
+This document discusses some problems arising from the current definitions of materialization
+and assignability. Because these are foundational concepts for the type system, they
+have implications for other behaviors too, but these behaviors are not the focus here.
+
 ## Three claims
 
 Before I outline the specific problems, I want to make three claims about these
@@ -30,7 +34,9 @@ issues.
   when new features are added to the type system. Indeed many of the hardest cases
   involve intersection types, a feature that is not currently in the standardized type system
   but that may be added in the future. Without a solid theoretical foundation,
-  it is difficult to ensure new features behave consistently.
+  it is difficult to ensure new features behave consistently. And in some more
+  obscure cases, type checkers currently do not agree, and some useful theoretical
+  models also imply changes to how type checkers should behave.
 - *They need to be fixed together*. Below I identify a number of distinct
   problems, but they all relate to the same general theme in which the spec's
   current definition of assignability doesn't fit the behavior we want. Addressing only
@@ -42,7 +48,8 @@ issues.
 
 I reported [an issue](https://github.com/python/typing/issues/2027) last year about one
 problem: if materialization only happens through replacing `Any`, then a type
-`list[Any]` cannot be assignable to `list[int] | list[str]`, or vice versa. Replacing the
+`list[Any]` cannot materialize to `list[int] | list[str]`,
+and as a consequence `list[int] | list[str]` is not assignable to `list[Any]`. Replacing the
 single `Any` cannot produce a union of two incompatible kinds of lists. Thus, the current
 definition implies that `list[Any]` is not equivalent to `list[Any] | list[Any]`, though the
 spec [explicitly says](https://typing.python.org/en/latest/spec/concepts.html#union-types)
@@ -70,8 +77,13 @@ Substitution-based materialization also fails for gradual types that appear in
 generic parameters. Consider a generic type `Co[T]` whose type parameter is covariant
 (for example, `frozenset[T]`), and recall that `int` and `str` are disjoint. Existing
 type checkers generally treat types such as `Co[int | Any]` and `Co[int] | Co[str]`
-as consistent with each other. That behavior suggests that `Co[int] | Co[str]`
-should be understood as one possible materialization of `Co[int | Any]`.
+as consistent with each other, meaning that lists containing these types are mutually
+assignable. That behavior suggests that `Co[int] | Co[str]`
+should be understood as one possible materialization of `Co[int | Any]`. However,
+although the former type can be understood as a subtype of a materialization of the latter
+type (for example, of `Co[int | object] = Co[object]`) and also as a supertype of another
+(`Co[int | Never] = Co[int]`), simple substitution of `Any` cannot produce `Co[int] | Co[str]`
+out of `Co[int | Any]`.
 
 A rule that only copies gradual expressions before substitution does not produce this
 materialization. It can copy the whole `Co[int | Any]`, or it can copy the inner
@@ -111,6 +123,14 @@ with a non-existent element. Such a tuple cannot exist (a one-element tuple must
 have an element that exists), so this type is uninhabited and equivalent to `Never`.
 And `Never` is a subtype of every type. Therefore, `tuple[Any]` (which can materialize to `Never`)
 is also assignable to every type. We probably don't want that!
+
+The fact that `tuple[Never]` is equivalent to `Never` under the current definition
+in the spec (because both are uninhabited types) might itself be seen as a problem.
+After all, it is not obvious that these types are the same, and current type checkers
+generally do not treat them as equivalent. However, I do not think this equivalence
+is a problem in itself: it is of little practical importance because there is no
+reason for users to write `tuple[Never]` as a type directly. But this equivalence
+does become important if it leads to unrelated types becoming assignable to each other.
 
 This argument holds within containers too, so it is not enough to ban materializing the
 whole type to `Never`. For example, the types `list[tuple[Any]]` and `list[tuple[Any, Any]]`
@@ -157,6 +177,9 @@ a fully satisfactory solution. Here are a few approaches:
 - *Distinct Nevers*. Extend the type system with some distinct types that are empty
   but not the same as `Never`. This allows the bottom materialization to be a meaningful
   part of the type system, and it plugs some holes related to assignability.
+  For example, such an approach could explicitly define gradual types as intervals
+  between their top and bottom materializations, removing the need for a complex
+  definition of materialization involving expansion rules.
   However, it needs a new set of definitions for these extra types, and we risk
   infecting the type system with lots of mostly meaningless empty types that
   appear as a result of type narrowing.
